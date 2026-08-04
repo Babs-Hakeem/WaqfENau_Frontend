@@ -86,7 +86,7 @@ function UnitNode({ unit, index }) {
 
   const handleStart = () => {
     setPopupOpen(false);
-    navigate(`/unit/${unit.id}`);
+    navigate(`/unit/${unit.id}`, { state: { unit } });
   };
 
   return (

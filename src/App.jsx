@@ -10,6 +10,7 @@ import Streak from './screens/Streak';
 import Leaderboard from './screens/Leaderboard';
 import Friends from './screens/Friends';
 import AdminPanel from './screens/AdminPanel';
+import UnitLessons from './screens/UnitLessons';
 
 const ProtectedRoute = ({ children }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -32,6 +33,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
         <Route path="/lesson/:lessonId" element={<ProtectedRoute><Exercise /></ProtectedRoute>} />
+        <Route path="/unit/:unitId" element={<ProtectedRoute><UnitLessons /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/hearts" element={<ProtectedRoute><Hearts /></ProtectedRoute>} />
         <Route path="/streak" element={<ProtectedRoute><Streak /></ProtectedRoute>} />
