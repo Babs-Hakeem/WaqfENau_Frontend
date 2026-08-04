@@ -14,7 +14,10 @@ export default function Login() {
     e.preventDefault();
     clearError();
     const success = await login(email, password);
-    if (success) navigate('/');
+    if (success) {
+      const loggedInMember = useAuthStore.getState().member;
+      navigate(loggedInMember?.role === 'NationalAdmin' ? '/admin' : '/');
+    }
   };
 
   return (
