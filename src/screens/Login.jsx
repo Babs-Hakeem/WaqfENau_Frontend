@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
+import api from '../api/axios';
 import { BookOpen, Eye, EyeOff } from 'lucide-react';
 
 export default function Login() {
@@ -15,8 +16,13 @@ export default function Login() {
     clearError();
     const success = await login(email, password);
     if (success) {
-      const loggedInMember = useAuthStore.getState().member;
-      navigate(loggedInMember?.role === 'NationalAdmin' ? '/admin' : '/');
+      try {
+        const { data: profile } = await api.get('/me/profile');
+        navigate(profile?.role === 'NationalAdmin' ? '/admin' : '/');
+      } catch {
+        // Fallback: if the profile fetch fails for any reason, don't block login
+        navigate('/');
+      }
     }
   };
 
