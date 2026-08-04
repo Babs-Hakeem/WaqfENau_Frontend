@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus, ChevronRight, ArrowLeft, Trash2, Eye, EyeOff,
-  BookOpen, Layers, FileText, Zap, CheckCircle2, X, Save
+  BookOpen, Layers, FileText, Zap, X, Save
 } from 'lucide-react';
 import api from '../api/axios';
 
@@ -639,13 +639,20 @@ export default function AdminPanel() {
       <div className="sticky top-0 z-40 bg-white border-b-2 border-gray-100">
         <div className="max-w-2xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <button onClick={() => { if (activeSectionId) setActiveSectionId(null); else navigate('/'); }}
-              className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200">
-              <ArrowLeft className="w-4 h-4 text-gray" />
-            </button>
+            {activeSectionId && (
+              <button onClick={() => setActiveSectionId(null)}
+                className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200">
+                <ArrowLeft className="w-4 h-4 text-gray" />
+              </button>
+            )}
             <span className="font-extrabold text-dark text-lg">Admin Panel</span>
           </div>
-          <CheckCircle2 className="w-6 h-6 text-primary" />
+          {!activeSectionId && (
+            <button onClick={() => navigate('/')}
+              className="text-xs font-bold text-primary hover:underline">
+              View as Student
+            </button>
+          )}
         </div>
       </div>
 
