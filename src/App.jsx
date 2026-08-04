@@ -9,13 +9,20 @@ import Hearts from './screens/Hearts';
 import Streak from './screens/Streak';
 import Leaderboard from './screens/Leaderboard';
 import Friends from './screens/Friends';
+import AdminPanel from './screens/AdminPanel';
 
 const ProtectedRoute = ({ children }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   return isAuthenticated ? children : <Navigate to="/login" />;
 };
 
-const Protected = ({ children }) => <ProtectedRoute>{children}</ProtectedRoute>;
+const AdminRoute = ({ children }) => {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const member = useAuthStore((state) => state.member);
+  if (!isAuthenticated) return <Navigate to="/login" />;
+  if (member?.role !== 'NationalAdmin') return <Navigate to="/" />;
+  return children;
+};
 
 function App() {
   return (
@@ -23,13 +30,14 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/" element={<Protected><Home /></Protected>} />
-        <Route path="/lesson/:lessonId" element={<Protected><Exercise /></Protected>} />
-        <Route path="/profile" element={<Protected><Profile /></Protected>} />
-        <Route path="/hearts" element={<Protected><Hearts /></Protected>} />
-        <Route path="/streak" element={<Protected><Streak /></Protected>} />
-        <Route path="/leaderboard" element={<Protected><Leaderboard /></Protected>} />
-        <Route path="/friends" element={<Protected><Friends /></Protected>} />
+        <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+        <Route path="/lesson/:lessonId" element={<ProtectedRoute><Exercise /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/hearts" element={<ProtectedRoute><Hearts /></ProtectedRoute>} />
+        <Route path="/streak" element={<ProtectedRoute><Streak /></ProtectedRoute>} />
+        <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
+        <Route path="/friends" element={<ProtectedRoute><Friends /></ProtectedRoute>} />
+        <Route path="/admin" element={<AdminRoute><AdminPanel /></AdminRoute>} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>
