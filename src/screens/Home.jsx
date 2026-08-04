@@ -5,7 +5,7 @@ import api from '../api/axios';
 import {
   Flame, Heart, Gem, BookOpen, Lock, CheckCircle2,
   Home as HomeIcon, Trophy, Users, User,
-  LogOut, X, Star, Shield, ChevronRight, Zap, Sparkles, Target
+  LogOut, X, Star, Shield, ChevronRight, Zap, Sparkles, Target, Settings
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -288,6 +288,9 @@ function ProfileDrawer({ isOpen, onClose, member, onLogout }) {
                 { icon: Flame, label: 'Streak', path: '/streak', color: 'text-orange-500', bg: 'bg-orange-50' },
                 { icon: Shield, label: 'Profile', path: '/profile', color: 'text-primary', bg: 'bg-primary-light' },
                 { icon: Trophy, label: 'Leaderboard', path: '/leaderboard', color: 'text-amber', bg: 'bg-amber/10' },
+                ...(member?.role === 'NationalAdmin'
+                  ? [{ icon: Settings, label: 'Admin Panel', path: '/admin', color: 'text-purple-600', bg: 'bg-purple-50' }]
+                  : []),
               ].map(item => (
                 <button key={item.path} onClick={() => { navigate(item.path); onClose(); }}
                   className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl hover:bg-gray-50 transition-colors">
