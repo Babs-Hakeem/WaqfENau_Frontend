@@ -9,27 +9,27 @@ import api from '../api/axios';
 
 // ── Constants — must match backend enums exactly ───────────────────────────
 const AGE_GROUPS = [
-  { value: 'Children7_9',    label: 'Children (7-9)' },
-  { value: 'Children10_12',  label: 'Children (10-12)' },
-  { value: 'Teenagers13_15', label: 'Teenagers (13-15)' },
-  { value: 'Youth16_Plus',   label: 'Youth (16+)' },
+  { value: 1, label: 'Children (7-9)' },
+  { value: 2, label: 'Children (10-12)' },
+  { value: 3, label: 'Teenagers (13-15)' },
+  { value: 4, label: 'Youth (16+)' },
 ];
 
 const CATEGORIES = [
-  { value: 'Hadith',          label: 'Hadith' },
-  { value: 'Salat',           label: 'Salat' },
-  { value: 'Urdu',            label: 'Urdu' },
-  { value: 'History',         label: 'History' },
-  { value: 'QuranRecitation', label: 'Quran Recitation' },
+  { value: 1, label: 'Hadith' },
+  { value: 2, label: 'Salat' },
+  { value: 3, label: 'Urdu' },
+  { value: 4, label: 'History' },
+  { value: 5, label: 'Quran Recitation' },
 ];
 
 const EXERCISE_TYPES = [
-  { value: 'InfoCard',       label: 'Info Card (text/explanation)' },
-  { value: 'MultipleChoice', label: 'Multiple Choice (4 options)' },
-  { value: 'TrueFalse',      label: 'True / False' },
-  { value: 'FillBlank',      label: 'Fill in the Blank' },
-  { value: 'Arrange',        label: 'Arrange Words in Order' },
-  { value: 'Match',          label: 'Match Pairs' },
+  { value: 1, label: 'Info Card (text/explanation)' },
+  { value: 2, label: 'Multiple Choice (4 options)' },
+  { value: 3, label: 'True / False' },
+  { value: 4, label: 'Fill in the Blank' },
+  { value: 5, label: 'Arrange Words in Order' },
+  { value: 6, label: 'Match Pairs' },
 ];
 
 // ── Shared UI components ───────────────────────────────────────────────────
@@ -108,7 +108,7 @@ function ExerciseBuilder({ lessonId, onBack }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [form, setForm] = useState({
-    type: 'MultipleChoice', prompt: '', explanationText: '', xpReward: 5,
+    type: 2, prompt: '', explanationText: '', xpReward: 5,
     options: [
       { text: '', isCorrect: true,  orderIndex: 0 },
       { text: '', isCorrect: false, orderIndex: 1 },
@@ -128,7 +128,7 @@ function ExerciseBuilder({ lessonId, onBack }) {
   const resetForm = () => {
     setError('');
     setForm({
-      type: 'MultipleChoice', prompt: '', explanationText: '', xpReward: 5,
+      type: 2, prompt: '', explanationText: '', xpReward: 5,
       options: [
         { text: '', isCorrect: true,  orderIndex: 0 },
         { text: '', isCorrect: false, orderIndex: 1 },
@@ -140,25 +140,25 @@ function ExerciseBuilder({ lessonId, onBack }) {
 
   const handleTypeChange = (type) => {
     let options = [];
-    if (type === 'MultipleChoice') options = [
+    if (Number(type) === 2) options = [
       { text: '', isCorrect: true,  orderIndex: 0 },
       { text: '', isCorrect: false, orderIndex: 1 },
       { text: '', isCorrect: false, orderIndex: 2 },
       { text: '', isCorrect: false, orderIndex: 3 },
     ];
-    if (type === 'TrueFalse') options = [
+    if (Number(type) === 3) options = [
       { text: 'True',  isCorrect: true,  orderIndex: 0 },
       { text: 'False', isCorrect: false, orderIndex: 1 },
     ];
-    if (type === 'FillBlank') options = [
+    if (Number(type) === 4) options = [
       { text: '', isCorrect: true, orderIndex: 0 }
     ];
-    if (type === 'Arrange') options = [
+    if (Number(type) === 5) options = [
       { text: '', isCorrect: true, orderIndex: 0 },
       { text: '', isCorrect: true, orderIndex: 1 },
       { text: '', isCorrect: true, orderIndex: 2 },
     ];
-    if (type === 'Match') options = [
+    if (Number(type) === 6) options = [
       { text: '', isCorrect: true, orderIndex: 0, matchGroupId: 1 },
       { text: '', isCorrect: true, orderIndex: 1, matchGroupId: 1 },
       { text: '', isCorrect: true, orderIndex: 2, matchGroupId: 2 },
@@ -174,12 +174,12 @@ function ExerciseBuilder({ lessonId, onBack }) {
     try {
       await api.post('/admin/exercises', {
         lessonId,
-        type: form.type,
+        type: Number(form.type),
         orderIndex: exercises.length + 1,
         prompt: form.prompt,
         explanationText: form.explanationText || null,
         xpReward: Number(form.xpReward),
-        options: form.type === 'InfoCard' ? [] : form.options.map((o, i) => ({ ...o, orderIndex: i })),
+        options: Number(form.type) === 1 ? [] : form.options.map((o, i) => ({ ...o, orderIndex: i })),
       });
       setShowModal(false);
       resetForm();
@@ -257,7 +257,7 @@ function ExerciseBuilder({ lessonId, onBack }) {
                 placeholder="e.g. What does Bismillah mean?" />
             </Field>
 
-            {form.type === 'InfoCard' && (
+            {Number(form.type) === 1 && (
               <Field label="Explanation Text (shown to student)">
                 <textarea className={textareaCls} rows={4} value={form.explanationText}
                   onChange={e => setForm(f => ({ ...f, explanationText: e.target.value }))}
@@ -458,7 +458,7 @@ function UnitList({ sectionId, onBack }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [activeUnitId, setActiveUnitId] = useState(null);
-  const [form, setForm] = useState({ title: '', description: '', category: 'Salat', xpReward: 100 });
+  const [form, setForm] = useState({ title: '', description: '', category: 2, xpReward: 100 });
 
   const load = async () => {
     setLoading(true);
@@ -477,13 +477,13 @@ function UnitList({ sectionId, onBack }) {
         title: form.title,
         description: form.description,
         sectionId,
-        category: form.category,
+        category: Number(form.category),
         orderIndex: units.length + 1,
         xpReward: Number(form.xpReward),
         guidebookContent: '',
       });
       setShowModal(false);
-      setForm({ title: '', description: '', category: 'Salat', xpReward: 100 });
+      setForm({ title: '', description: '', category: 2, xpReward: 100 });
       load();
     } catch (e) {
       setError(e.response?.data?.message || JSON.stringify(e.response?.data) || 'Failed to save');
@@ -573,7 +573,7 @@ function UnitList({ sectionId, onBack }) {
             </Field>
             <Field label="Category">
               <select className={selectCls} value={form.category}
-                onChange={e => setForm(f => ({ ...f, category: e.target.value }))}>
+                onChange={e => setForm(f => ({ ...f, category: Number(e.target.value) }))}>
                 {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
               </select>
             </Field>
@@ -601,7 +601,7 @@ function SectionList({ onEnter }) {
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [form, setForm] = useState({ title: '', description: '', ageGroup: 'Teenagers13_15', orderIndex: 1 });
+  const [form, setForm] = useState({ title: '', description: '', ageGroup: 3, orderIndex: 1 });
 
   const load = async () => {
     setLoading(true);
@@ -619,11 +619,11 @@ function SectionList({ onEnter }) {
       await api.post('/admin/sections', {
         title: form.title,
         description: form.description,
-        ageGroup: form.ageGroup,
+        ageGroup: Number(form.ageGroup),
         orderIndex: Number(form.orderIndex),
       });
       setShowModal(false);
-      setForm({ title: '', description: '', ageGroup: 'Teenagers13_15', orderIndex: sections.length + 2 });
+      setForm({ title: '', description: '', ageGroup: 3, orderIndex: sections.length + 2 });
       load();
     } catch (e) {
       setError(e.response?.data?.message || JSON.stringify(e.response?.data) || 'Failed to create section');
@@ -649,7 +649,7 @@ function SectionList({ onEnter }) {
           <h2 className="font-extrabold text-dark text-2xl">Content Manager</h2>
           <p className="text-gray-400 text-sm mt-0.5">Section → Unit → Lesson → Exercise</p>
         </div>
-        <Btn onClick={() => { setError(''); setForm({ title: '', description: '', ageGroup: 'Teenagers13_15', orderIndex: sections.length + 1 }); setShowModal(true); }}>
+        <Btn onClick={() => { setError(''); setForm({ title: '', description: '', ageGroup: 3, orderIndex: sections.length + 1 }); setShowModal(true); }}>
           <Plus className="w-4 h-4" /> New Section
         </Btn>
       </div>
@@ -718,7 +718,7 @@ function SectionList({ onEnter }) {
             </Field>
             <Field label="Age Group">
               <select className={selectCls} value={form.ageGroup}
-                onChange={e => setForm(f => ({ ...f, ageGroup: e.target.value }))}>
+                onChange={e => setForm(f => ({ ...f, ageGroup: Number(e.target.value) }))}>
                 {AGE_GROUPS.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
               </select>
             </Field>
