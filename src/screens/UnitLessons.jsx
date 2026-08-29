@@ -21,14 +21,6 @@ export default function UnitLessons() {
         // Lessons endpoint is student-safe — always fetch it.
         const lessonsPromise = api.get(`/lessons/unit/${unitId}`);
 
-        // Unit metadata (title/category/xp) was passed via navigation state
-        // from the Home screen (it's already loaded there via /me/path), so
-        // we only hit the network for it when the page is opened directly
-        // (refresh, bookmark, shared link) and we don't already have it.
-        // NOTE: /admin/units/{id} is admin-only and will 403 for students —
-        // do not call it here. If you don't yet have a public unit-detail
-        // endpoint, add one (e.g. GET /api/units/{id}, no [Authorize(Roles="Admin")])
-        // and swap the URL below.
         const unitPromise = unit ? Promise.resolve(null) : api.get(`/units/${unitId}`).catch(() => null);
 
         const [lessonsRes, unitRes] = await Promise.all([lessonsPromise, unitPromise]);
