@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft, CheckCircle2, Lock, Clock, Zap,
@@ -10,19 +10,31 @@ import api from '../api/axios';
 export default function UnitLessons() {
   const { unitId } = useParams();
   const navigate = useNavigate();
-  const [unit, setUnit] = useState(null);
+  const location = useLocation();
+  const [unit, setUnit] = useState(location.state?.unit || null);
   const [lessons, setLessons] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [unitRes, lessonsRes] = await Promise.all([
-          api.get(`/admin/units/${unitId}`),   // get unit info
-          api.get(`/lessons/unit/${unitId}`),   // get lessons with lock/complete status
-        ]);
-        setUnit(unitRes.data);
+        // Lessons endpoint is student-safe — always fetch it.
+        const lessonsPromise = api.get(`/lessons/unit/${unitId}`);
+
+        // Unit metadata (title/category/xp) was passed via navigation state
+        // from the Home screen (it's already loaded there via /me/path), so
+        // we only hit the network for it when the page is opened directly
+        // (refresh, bookmark, shared link) and we don't already have it.
+        // NOTE: /admin/units/{id} is admin-only and will 403 for students —
+        // do not call it here. If you don't yet have a public unit-detail
+        // endpoint, add one (e.g. GET /api/units/{id}, no [Authorize(Roles="Admin")])
+        // and swap the URL below.
+        const unitPromise = unit ? Promise.resolve(null) : api.get(`/units/${unitId}`).catch(() => null);
+
+        const [lessonsRes, unitRes] = await Promise.all([lessonsPromise, unitPromise]);
+
         setLessons(lessonsRes.data);
+        if (unitRes) setUnit(unitRes.data);
       } catch (e) {
         console.error(e);
         navigate('/');
@@ -31,6 +43,7 @@ export default function UnitLessons() {
       }
     };
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [unitId, navigate]);
 
   if (loading) return (
