@@ -145,30 +145,41 @@ function LessonNode({ lesson, unit, index, isCurrent }) {
           )}
         </motion.button>
 
-        {/* Popup card */}
+        {/* Popup — a centered fixed modal, NOT anchored to the node. Anchoring
+            it to the node with `absolute` broke scrolling: the page's
+            scrollable height only accounted for the node circles, not a
+            popup hanging below the last one, so it could end up stuck
+            behind the fixed bottom nav with no way to scroll to it. A
+            fixed, viewport-centered modal is always fully reachable
+            regardless of where the node sits on the page. */}
         <AnimatePresence>
           {popupOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: -6, scale: 0.93 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -6, scale: 0.93 }}
-              transition={{ duration: 0.15 }}
-              className="absolute z-50 bg-primary rounded-2xl p-4 shadow-2xl"
-              style={{ top: `${NODE_SIZE + 12}px`, width: '210px', left: '50%', transform: 'translateX(-50%)' }}>
-              <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[8px] border-r-[8px] border-b-[10px] border-l-transparent border-r-transparent border-b-primary" />
-              <p className="text-white font-extrabold text-sm leading-tight mb-0.5">{lesson.title}</p>
-              <p className="text-green-200 text-[11px] mb-2">
-                {unit.category} · +{lesson.xpReward} XP · {lesson.estimatedMinutes || 5} min
-              </p>
-              {state === 'completed' && lesson.score != null && (
-                <p className="text-green-200 text-[11px] mb-2">Best score: {lesson.score}%</p>
-              )}
-              <button onClick={handleStart}
-                className="w-full h-9 bg-white text-primary font-extrabold text-sm rounded-xl hover:bg-green-50 transition-colors flex items-center justify-center gap-1.5">
-                {state === 'completed' ? 'Review' : 'Start'}
-                <Zap className="w-3.5 h-3.5 text-primary" />
-              </button>
-            </motion.div>
+            <>
+              <motion.div
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                onClick={() => setPopupOpen(false)}
+                className="fixed inset-0 bg-black/40 z-[60] backdrop-blur-[2px]" />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                transition={{ duration: 0.15 }}
+                className="fixed z-[61] bg-primary rounded-2xl p-5 shadow-2xl w-[85vw] max-w-[280px]"
+                style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
+                <p className="text-white font-extrabold text-base leading-tight mb-1">{lesson.title}</p>
+                <p className="text-green-200 text-xs mb-3">
+                  {unit.category} · +{lesson.xpReward} XP · {lesson.estimatedMinutes || 5} min
+                </p>
+                {state === 'completed' && lesson.score != null && (
+                  <p className="text-green-200 text-xs mb-3">Best score: {lesson.score}%</p>
+                )}
+                <button onClick={handleStart}
+                  className="w-full h-11 bg-white text-primary font-extrabold text-sm rounded-xl hover:bg-green-50 transition-colors flex items-center justify-center gap-1.5">
+                  {state === 'completed' ? 'Review' : 'Start'}
+                  <Zap className="w-3.5 h-3.5 text-primary" />
+                </button>
+              </motion.div>
+            </>
           )}
         </AnimatePresence>
       </div>
