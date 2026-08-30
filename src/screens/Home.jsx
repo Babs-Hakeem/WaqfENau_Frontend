@@ -9,16 +9,31 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+// Mock path now includes a `lessons` array per unit so the demo path
+// renders exactly like the real one (one node per lesson).
 const MOCK_PATH = [
   {
     id: 'sec-1', title: 'Section 1', description: 'Foundations of Faith',
     ageGroup: 'Teenagers13_15', orderIndex: 1,
     units: [
-      { id: 'u1', title: 'Wudu & Salat', category: 'Salat', xpReward: 100, totalLessons: 5, completedLessons: 5, progressPercent: 100, isUnlocked: true, isCompleted: true },
-      { id: 'u2', title: 'The Five Pillars', category: 'Hadith', xpReward: 120, totalLessons: 6, completedLessons: 3, progressPercent: 50, isUnlocked: true, isCompleted: false },
-      { id: 'u3', title: 'Islamic History', category: 'History', xpReward: 150, totalLessons: 8, completedLessons: 0, progressPercent: 0, isUnlocked: false, isCompleted: false },
-      { id: 'u4', title: 'The Holy Quran', category: 'Quran', xpReward: 200, totalLessons: 10, completedLessons: 0, progressPercent: 0, isUnlocked: false, isCompleted: false },
-      { id: 'u5', title: 'Names of Allah', category: 'Hadith', xpReward: 120, totalLessons: 5, completedLessons: 0, progressPercent: 0, isUnlocked: false, isCompleted: false },
+      {
+        id: 'u1', title: 'Wudu & Salat', category: 'Salat', xpReward: 100, totalLessons: 3, completedLessons: 3, progressPercent: 100, isUnlocked: true, isCompleted: true,
+        lessons: [
+          { id: 'l1', title: 'Intro to Wudu', xpReward: 20, estimatedMinutes: 5, isCompleted: true, isLocked: false, score: 100 },
+          { id: 'l2', title: 'Prayer before wudu', xpReward: 20, estimatedMinutes: 5, isCompleted: true, isLocked: false, score: 90 },
+          { id: 'l3', title: 'Steps of Salat', xpReward: 30, estimatedMinutes: 8, isCompleted: true, isLocked: false, score: 85 },
+        ],
+      },
+      {
+        id: 'u2', title: 'The Five Pillars', category: 'Hadith', xpReward: 120, totalLessons: 3, completedLessons: 1, progressPercent: 33, isUnlocked: true, isCompleted: false,
+        lessons: [
+          { id: 'l4', title: 'Shahada', xpReward: 20, estimatedMinutes: 5, isCompleted: true, isLocked: false, score: 95 },
+          { id: 'l5', title: 'Salat', xpReward: 20, estimatedMinutes: 5, isCompleted: false, isLocked: false, score: null },
+          { id: 'l6', title: 'Zakat', xpReward: 20, estimatedMinutes: 6, isCompleted: false, isLocked: true, score: null },
+        ],
+      },
+      { id: 'u3', title: 'Islamic History', category: 'History', xpReward: 150, totalLessons: 4, completedLessons: 0, progressPercent: 0, isUnlocked: false, isCompleted: false },
+      { id: 'u4', title: 'The Holy Quran', category: 'Quran', xpReward: 200, totalLessons: 5, completedLessons: 0, progressPercent: 0, isUnlocked: false, isCompleted: false },
     ]
   },
   {
@@ -27,14 +42,14 @@ const MOCK_PATH = [
     units: [
       { id: 'u6', title: 'Akhlaq', category: 'Character', xpReward: 100, totalLessons: 5, completedLessons: 0, progressPercent: 0, isUnlocked: false, isCompleted: false },
       { id: 'u7', title: 'Respect & Manners', category: 'Character', xpReward: 100, totalLessons: 4, completedLessons: 0, progressPercent: 0, isUnlocked: false, isCompleted: false },
-      { id: 'u8', title: 'Honesty & Truth', category: 'Hadith', xpReward: 110, totalLessons: 5, completedLessons: 0, progressPercent: 0, isUnlocked: false, isCompleted: false },
     ]
   }
 ];
 
-// Zigzag offsets — left of center, center, right of center
+// Zigzag offsets — left of center, center, right of center. Runs continuously
+// across every lesson node in a section so the snake doesn't reset per unit.
 const ZIGZAG_X = [-80, -30, 30, 80, 30, -30];
-const NODE_SIZE = 80;
+const NODE_SIZE = 76;
 
 // ── Top Bar ───────────────────────────────────────────────────────────────────
 function TopBar({ member, hearts, streak, xp, onProfileClick }) {
@@ -62,16 +77,15 @@ function TopBar({ member, hearts, streak, xp, onProfileClick }) {
   );
 }
 
-// ── Unit Node ─────────────────────────────────────────────────────────────────
-function UnitNode({ unit, index }) {
+// ── Lesson Node (one circle = one lesson) ───────────────────────────────────────
+function LessonNode({ lesson, unit, index, isCurrent }) {
   const [popupOpen, setPopupOpen] = useState(false);
   const nodeRef = useRef(null);
   const navigate = useNavigate();
 
-  const state = unit.isCompleted ? 'completed'
-    : (unit.isUnlocked && unit.progressPercent > 0) ? 'progress'
-    : unit.isUnlocked ? 'current'
-    : 'locked';
+  const state = lesson.isCompleted ? 'completed'
+    : isCurrent ? 'current'
+    : 'locked'; // sequential unlock means anything not current/completed is effectively locked
 
   const xOffset = ZIGZAG_X[index % ZIGZAG_X.length];
 
@@ -86,16 +100,14 @@ function UnitNode({ unit, index }) {
 
   const handleStart = () => {
     setPopupOpen(false);
-    navigate(`/unit/${unit.id}`, { state: { unit } });
+    navigate(`/lesson/${lesson.id}`);
   };
 
   return (
-    <div className="relative flex justify-center" style={{ height: `${NODE_SIZE + 60}px` }}>
-      {/* Node positioned with zigzag offset */}
+    <div className="relative flex justify-center" style={{ height: `${NODE_SIZE + 50}px` }}>
       <div ref={nodeRef} className="absolute flex flex-col items-center"
-        style={{ left: `calc(50% + ${xOffset}px - ${NODE_SIZE / 2}px)`, top: '20px' }}>
+        style={{ left: `calc(50% + ${xOffset}px - ${NODE_SIZE / 2}px)`, top: '16px' }}>
 
-        {/* START bounce label */}
         {state === 'current' && (
           <motion.div animate={{ y: [0, -6, 0] }} transition={{ repeat: Infinity, duration: 1.4, ease: 'easeInOut' }}
             className="mb-2 bg-primary text-white text-xs font-extrabold px-4 py-1.5 rounded-full shadow-lg relative">
@@ -104,14 +116,13 @@ function UnitNode({ unit, index }) {
           </motion.div>
         )}
 
-        {/* The actual node circle */}
         <motion.button
           whileHover={state !== 'locked' ? { scale: 1.1 } : {}}
           whileTap={state !== 'locked' ? { scale: 0.92 } : {}}
           onClick={() => state !== 'locked' && setPopupOpen(p => !p)}
           disabled={state === 'locked'}
           animate={state === 'current' ? {
-            boxShadow: ['0 0 0 0px rgba(58,171,109,0.6)', '0 0 0 18px rgba(58,171,109,0)', '0 0 0 0px rgba(58,171,109,0)']
+            boxShadow: ['0 0 0 0px rgba(58,171,109,0.6)', '0 0 0 16px rgba(58,171,109,0)', '0 0 0 0px rgba(58,171,109,0)']
           } : {}}
           transition={state === 'current' ? { repeat: Infinity, duration: 2 } : {}}
           className={`relative flex items-center justify-center rounded-full
@@ -119,44 +130,20 @@ function UnitNode({ unit, index }) {
               ? 'bg-[#e5e5e5] border-b-[5px] border-[#bbb] cursor-not-allowed'
               : state === 'completed'
               ? 'bg-primary border-b-[5px] border-primary-dark shadow-xl shadow-primary/40 cursor-pointer'
-              : state === 'progress'
-              ? 'bg-white border-4 border-primary shadow-lg cursor-pointer'
               : 'bg-primary border-b-[5px] border-primary-dark shadow-xl shadow-primary/50 cursor-pointer'
             }`}
           style={{ width: NODE_SIZE, height: NODE_SIZE }}>
 
-          {state === 'locked' && <Lock className="text-[#aaa]" style={{ width: 32, height: 32 }} />}
-          {state === 'completed' && <CheckCircle2 className="text-white" style={{ width: 36, height: 36 }} strokeWidth={2.5} />}
-          {state === 'progress' && (
-            <>
-              <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 80 80">
-                <circle cx="40" cy="40" r="34" fill="none" stroke="#d1fae5" strokeWidth="7" />
-                <motion.circle cx="40" cy="40" r="34" fill="none" stroke="#3AAB6D" strokeWidth="7"
-                  strokeDasharray={`${2 * Math.PI * 34}`}
-                  initial={{ strokeDashoffset: 2 * Math.PI * 34 }}
-                  animate={{ strokeDashoffset: 2 * Math.PI * 34 * (1 - unit.progressPercent / 100) }}
-                  transition={{ duration: 1.5, ease: 'easeOut' }}
-                  strokeLinecap="round" />
-              </svg>
-              <BookOpen className="text-primary relative z-10" style={{ width: 30, height: 30 }} />
-            </>
-          )}
-          {state === 'current' && <Star className="text-white fill-white" style={{ width: 36, height: 36 }} />}
+          {state === 'locked' && <Lock className="text-[#aaa]" style={{ width: 28, height: 28 }} />}
+          {state === 'completed' && <CheckCircle2 className="text-white" style={{ width: 32, height: 32 }} strokeWidth={2.5} />}
+          {state === 'current' && <Star className="text-white fill-white" style={{ width: 32, height: 32 }} />}
 
-          {/* Gold star badge on completed */}
           {state === 'completed' && (
-            <div className="absolute -top-2 -right-2 w-7 h-7 bg-amber rounded-full flex items-center justify-center shadow-md border-2 border-white">
-              <Star className="w-3.5 h-3.5 text-white fill-white" />
+            <div className="absolute -top-2 -right-2 w-6 h-6 bg-amber rounded-full flex items-center justify-center shadow-md border-2 border-white">
+              <Star className="w-3 h-3 text-white fill-white" />
             </div>
           )}
         </motion.button>
-
-        {/* Unit name label under node */}
-        <div className="mt-2 text-center max-w-[110px]">
-          <p className={`text-xs font-bold leading-tight ${state === 'locked' ? 'text-gray-400' : 'text-dark'}`}>
-            {unit.title}
-          </p>
-        </div>
 
         {/* Popup card */}
         <AnimatePresence>
@@ -167,21 +154,18 @@ function UnitNode({ unit, index }) {
               exit={{ opacity: 0, y: -6, scale: 0.93 }}
               transition={{ duration: 0.15 }}
               className="absolute z-50 bg-primary rounded-2xl p-4 shadow-2xl"
-              style={{ top: `${NODE_SIZE + 16}px`, width: '200px', left: '50%', transform: 'translateX(-50%)' }}>
+              style={{ top: `${NODE_SIZE + 12}px`, width: '210px', left: '50%', transform: 'translateX(-50%)' }}>
               <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[8px] border-r-[8px] border-b-[10px] border-l-transparent border-r-transparent border-b-primary" />
-              <p className="text-white font-extrabold text-sm leading-tight mb-0.5">{unit.title}</p>
-              <p className="text-green-200 text-[11px] mb-2">{unit.category} · +{unit.xpReward} XP</p>
-              {state === 'progress' && (
-                <div className="mb-2">
-                  <div className="h-1.5 bg-white/20 rounded-full overflow-hidden">
-                    <div className="h-full bg-white rounded-full" style={{ width: `${unit.progressPercent}%` }} />
-                  </div>
-                  <p className="text-green-200 text-[10px] mt-1">{unit.completedLessons}/{unit.totalLessons} lessons</p>
-                </div>
+              <p className="text-white font-extrabold text-sm leading-tight mb-0.5">{lesson.title}</p>
+              <p className="text-green-200 text-[11px] mb-2">
+                {unit.category} · +{lesson.xpReward} XP · {lesson.estimatedMinutes || 5} min
+              </p>
+              {state === 'completed' && lesson.score != null && (
+                <p className="text-green-200 text-[11px] mb-2">Best score: {lesson.score}%</p>
               )}
               <button onClick={handleStart}
                 className="w-full h-9 bg-white text-primary font-extrabold text-sm rounded-xl hover:bg-green-50 transition-colors flex items-center justify-center gap-1.5">
-                {state === 'completed' ? 'Practice' : state === 'progress' ? 'Continue' : 'Start'}
+                {state === 'completed' ? 'Review' : 'Start'}
                 <Zap className="w-3.5 h-3.5 text-primary" />
               </button>
             </motion.div>
@@ -192,11 +176,42 @@ function UnitNode({ unit, index }) {
   );
 }
 
+// ── Locked placeholder (for units the student can't see lesson detail for yet) ──
+function LockedPlaceholderNode({ index }) {
+  const xOffset = ZIGZAG_X[index % ZIGZAG_X.length];
+  return (
+    <div className="relative flex justify-center" style={{ height: `${NODE_SIZE + 50}px` }}>
+      <div className="absolute flex flex-col items-center"
+        style={{ left: `calc(50% + ${xOffset}px - ${NODE_SIZE / 2}px)`, top: '16px' }}>
+        <div className="rounded-full bg-[#e5e5e5] border-b-[5px] border-[#bbb] flex items-center justify-center"
+          style={{ width: NODE_SIZE, height: NODE_SIZE }}>
+          <Lock className="text-[#aaa]" style={{ width: 28, height: 28 }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Unit divider (plain text label between lesson clusters, Duolingo-style) ─────
+function UnitDivider({ unit }) {
+  return (
+    <div className="flex items-center gap-3 py-3 px-4">
+      <div className="flex-1 h-px bg-gray-200" />
+      <span className="text-gray-400 text-xs font-bold uppercase tracking-wide text-center">{unit.title}</span>
+      <div className="flex-1 h-px bg-gray-200" />
+    </div>
+  );
+}
+
 // ── Section ───────────────────────────────────────────────────────────────────
 function PathSection({ section }) {
+  // Flatten all units' lessons (or locked placeholders) into one continuous,
+  // running-indexed list so the zigzag snake runs through the whole section
+  // rather than resetting per unit.
+  let runningIndex = 0;
+
   return (
     <div className="mb-4">
-      {/* Section banner */}
       <div className="bg-primary rounded-2xl px-6 py-5 flex items-center justify-between mb-4">
         <div>
           <p className="text-green-200 text-[11px] font-extrabold uppercase tracking-[0.15em] mb-1">{section.title}</p>
@@ -207,14 +222,36 @@ function PathSection({ section }) {
         </div>
       </div>
 
-      {/* Path with nodes */}
       <div className="relative">
-        {/* Background path line */}
         <div className="absolute left-1/2 top-0 bottom-0 w-[6px] -translate-x-1/2 bg-gray-200 rounded-full" />
 
-        {section.units.map((unit, idx) => (
-          <UnitNode key={unit.id} unit={unit} index={idx} />
-        ))}
+        {section.units.map((unit) => {
+          const hasLessons = Array.isArray(unit.lessons) && unit.lessons.length > 0;
+          return (
+            <div key={unit.id}>
+              <UnitDivider unit={unit} />
+              {hasLessons
+                ? unit.lessons.map((lesson) => {
+                    const node = (
+                      <LessonNode
+                        key={lesson.id}
+                        lesson={lesson}
+                        unit={unit}
+                        index={runningIndex}
+                        isCurrent={lesson.id === section._currentLessonId}
+                      />
+                    );
+                    runningIndex += 1;
+                    return node;
+                  })
+                : Array.from({ length: unit.totalLessons || 1 }).map((_, i) => {
+                    const node = <LockedPlaceholderNode key={`${unit.id}-locked-${i}`} index={runningIndex} />;
+                    runningIndex += 1;
+                    return node;
+                  })}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -338,14 +375,58 @@ export default function Home() {
           api.get('/me/streak'),
         ]);
         const pathData = pathRes.data;
-        if (!pathData || pathData.length === 0) { setUseMock(true); setPath(MOCK_PATH); }
-        else setPath(pathData);
+
+        let finalPath;
+        if (!pathData || pathData.length === 0) {
+          setUseMock(true);
+          finalPath = MOCK_PATH;
+        } else {
+          setUseMock(false);
+          // Fetch lessons only for unlocked units — locked units render as
+          // generic locked placeholders without an extra request each.
+          const unitsNeedingLessons = pathData.flatMap(section =>
+            section.units.filter(u => u.isUnlocked)
+          );
+          const lessonResults = await Promise.all(
+            unitsNeedingLessons.map(u =>
+              api.get(`/lessons/unit/${u.id}`).then(r => ({ unitId: u.id, lessons: r.data })).catch(() => ({ unitId: u.id, lessons: [] }))
+            )
+          );
+          const lessonsByUnitId = Object.fromEntries(lessonResults.map(r => [r.unitId, r.lessons]));
+
+          finalPath = pathData.map(section => ({
+            ...section,
+            units: section.units.map(unit => ({
+              ...unit,
+              lessons: unit.isUnlocked ? (lessonsByUnitId[unit.id] || []) : undefined,
+            })),
+          }));
+        }
+
+        // Find the single "current" lesson across the whole path — the first
+        // unlocked, incomplete lesson — and stamp it onto each section so
+        // LessonNode can compare against it without extra prop drilling.
+        let currentLessonId = null;
+        outer:
+        for (const section of finalPath) {
+          for (const unit of section.units) {
+            for (const lesson of (unit.lessons || [])) {
+              if (!lesson.isCompleted && !lesson.isLocked) {
+                currentLessonId = lesson.id;
+                break outer;
+              }
+            }
+          }
+        }
+        finalPath = finalPath.map(section => ({ ...section, _currentLessonId: currentLessonId }));
+
+        setPath(finalPath);
         setHearts(heartsRes.data);
         setStreak(streakRes.data);
         setXp(member?.totalXp || 0);
       } catch {
         setUseMock(true);
-        setPath(MOCK_PATH);
+        setPath(MOCK_PATH.map(section => ({ ...section, _currentLessonId: 'l5' })));
       } finally { setLoading(false); }
     };
     fetchData();
@@ -369,10 +450,8 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50">
       <TopBar member={member} hearts={hearts} streak={streak} xp={xp} onProfileClick={() => setProfileOpen(true)} />
 
-      {/* Centered content — max 640px like Duolingo */}
       <div className="max-w-xl mx-auto px-6 pt-6 pb-28">
 
-        {/* Greeting */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
           className="bg-gradient-to-r from-primary to-primary-dark rounded-2xl p-6 text-white mb-6 relative overflow-hidden">
           <div className="absolute -top-6 -right-6 w-32 h-32 bg-white/10 rounded-full" />
@@ -400,7 +479,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Path sections */}
         {path.map((section) => (
           <PathSection key={section.id} section={section} />
         ))}
